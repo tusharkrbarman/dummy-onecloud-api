@@ -7,11 +7,22 @@ Standalone FastAPI service that simulates a OneCloud-style hardware reservation 
 ```text
 GET  /health
 GET  /machines
+GET  /machines/{machine_id}
+GET  /reservations
 POST /reservations
+GET  /reservations/{reservation_id}
 POST /machines/{machine_id}/deploy-image
+GET  /deployments
 GET  /deployments/{deployment_id}/status
 POST /reservations/{reservation_id}/release
 ```
+
+The API maintains in-memory state while the service is running:
+
+- Creating a reservation changes the machine from `available` to `reserved`.
+- Image deployment is allowed only after the machine is reserved.
+- Deployment status moves from `IN_PROGRESS` to `READY` after polling.
+- Releasing a reservation changes the machine back to `available`.
 
 ## Local Run
 
