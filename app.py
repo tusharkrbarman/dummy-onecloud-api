@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from enum import Enum
 from uuid import uuid4
 
@@ -66,6 +67,8 @@ class DeploymentStatusResponse(BaseModel):
 
 class DeploymentRecord(DeploymentStatusResponse):
     poll_count: int = 0
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    ready_after_seconds: int = 20
 
 
 class ReleaseResponse(BaseModel):
@@ -287,6 +290,7 @@ def deploy_image(machine_id: str, request: ImageDeployRequest) -> ImageDeployRes
         image=request.image,
         status=DeploymentStatus.IN_PROGRESS,
         poll_count=0,
+        ready_after_seconds=20,
     )
     deployments[deployment_id] = deployment
 
@@ -310,7 +314,12 @@ def get_deployment_status(deployment_id: str) -> DeploymentStatusResponse:
     if deployment is None:
         raise HTTPException(status_code=404, detail=f"Deployment not found: {deployment_id}")
 
-    status = DeploymentStatus.READY if deployment.poll_count >= 1 else DeploymentStatus.IN_PROGRESS
+    elapsed_seconds = (datetime.now(timezone.utc) - deployment.created_at).total_seconds()
+    status = (
+        DeploymentStatus.READY
+        if elapsed_seconds >= deployment.ready_after_seconds
+        else DeploymentStatus.IN_PROGRESS
+    )
     deployments[deployment_id] = deployment.model_copy(
         update={
             "status": status,

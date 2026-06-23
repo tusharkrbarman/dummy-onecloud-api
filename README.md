@@ -21,7 +21,7 @@ The API maintains in-memory state while the service is running:
 
 - Creating a reservation changes the machine from `available` to `reserved`.
 - Image deployment is allowed only after the machine is reserved.
-- Deployment status moves from `IN_PROGRESS` to `READY` after polling.
+- Deployment status remains `IN_PROGRESS` for 20 seconds, then moves to `READY`.
 - Releasing a reservation changes the machine back to `available`.
 
 ## Local Run
